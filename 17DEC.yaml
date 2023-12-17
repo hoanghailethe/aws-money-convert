@@ -1,0 +1,330 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS infrastructure for API with Lambda and DynamoDB
+
+Metadata:
+  Authors:
+    Description: Hai Le The Hoang (lethehoanghai@gmail.com)
+  License:
+    Description: 'Copyright 2018 Amazon.com, Inc. and its affiliates. All Rights Reserved.BastionSecurityGroup
+                  SPDX-License-Identifier: MIT-0'
+
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name for the S3 table
+    Default: s3-haile-currencyproject-02
+
+  TableName:
+    Type: String
+    Description: Name for the DynamoDB table
+    Default: CurrencyExchangeTable
+
+  S3HoldLambdaCode:
+    Type: String
+    Description: name or ID of bucket S3 hold the Lambda code
+
+  DailyUpdateFunctionCodeKey:
+    Type: String
+    Description: lambda/lambda1-update-cronjob.zip
+
+  TimeSeriesFunctionCodeKey:
+    Type: String
+    Description: lambda/lambda3-timeserires.zip
+
+  ConvertCurrencyFunctionCodeKey:
+    Type: String
+    Description: lambda/lambda2-convert.zip
+
+
+Resources:
+  # S3 bucket
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}/*'
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+
+  #Cloud front
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: OAI for accessing S3 bucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Origins:
+          - DomainName: !GetAtt WebsiteBucket.DomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOAI}'
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+
+  #DynamoDB
+  CurrencyExchangeTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CurrencyExchange
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: TTL
+
+  # Lambda Function for Currency Conversion
+  # ConvertCurrencyFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     Handler: index.handler
+  #     Role: !GetAtt ConvertCurrencyRole.Arn
+  #     FunctionName: ConvertCurrencyFunction
+  #     Runtime: nodejs14.x
+  #     Timeout: 10
+  #     MemorySize: 128
+  #     Code:
+  #       S3Bucket: !Ref WebsiteBucket
+  #       S3Key: lambda/convert-currency.zip
+
+  # Lambda Function for Time Series Exchange Rate
+  # Lambda Functions
+  ConvertCurrencyFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ConvertCurrencyFunction
+      Environment:
+        Variables:
+          DYNAMO_DB_TABLE_NAME: !Ref CurrencyExchangeTable
+      Handler: index.handler  # Handler: index.handler means that when Lambda executes this function, it will call the handler method from the index.js file.
+      Role: !GetAtt LambdaExecutionRole2.Arn
+      Code:
+        S3Bucket: !Ref S3HoldLambdaCode
+        S3Key: !Ref ConvertCurrencyFunctionCodeKey
+      Runtime: nodejs18.x # Update this, e.g., python3.8, nodejs18.x
+
+  TimeSeriesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: TimeSeriesFunction
+      Environment:
+        Variables:
+          DYNAMO_DB_TABLE_NAME: !Ref CurrencyExchangeTable
+      Handler: index.handler 
+      Role: !GetAtt LambdaExecutionRole2.Arn
+      Code:
+        S3Bucket: !Ref S3HoldLambdaCode
+        S3Key: !Ref TimeSeriesFunctionCodeKey
+      Runtime: nodejs18.x # Update this, e.g., python3.8, nodejs18.x
+
+  # IAM Role for Lambda Functions
+  LambdaExecutionRole2:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !GetAtt CurrencyExchangeTable.Arn
+
+        - PolicyName: S3AccessForLambdaCode
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${S3HoldLambdaCode}/lambda/*" # Replace with your actual bucket name and path
+  # API Gateway
+  # API Gateway Rest API
+  MyApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MyApiGateway
+      Description: An API Gateway for currency conversion and time series
+  
+  # Resources for API paths
+  ConvertCurrencyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref MyApiGateway
+      ParentId: !GetAtt MyApiGateway.RootResourceId
+      PathPart: convert-rate
+
+  TimeSeriesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref MyApiGateway
+      ParentId: !GetAtt MyApiGateway.RootResourceId
+      PathPart: rate-on-time-series
+
+  # Methods for API resources
+  ConvertCurrencyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref MyApiGateway
+      ResourceId: !Ref ConvertCurrencyResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConvertCurrencyFunction.Arn}/invocations
+
+  TimeSeriesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref MyApiGateway
+      ResourceId: !Ref TimeSeriesResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TimeSeriesFunction.Arn}/invocations
+
+  # Lambda Permissions
+  ConvertCurrencyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ConvertCurrencyFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MyApiGateway}/*/POST/convert-rate
+
+  TimeSeriesPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TimeSeriesFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MyApiGateway}/*/GET/rate-on-time-series
+
+  # Lambda Function
+  DailyUpdateFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: DailyUpdateFunction
+      Environment:
+        Variables:
+          MY_API_ENDPOINT: 'https://v6.exchangerate-api.com/v6/222770c7c376abaf4d716b5b/latest/USD'
+          DYNAMO_DB_TABLE_NAME: !Ref CurrencyExchangeTable
+      Handler: index.handler # Update this based on your Lambda's handler
+      Role: !GetAtt LambdaExecutionRole1.Arn
+      Code:
+        S3Bucket: !Ref S3HoldLambdaCode
+        S3Key: !Ref DailyUpdateFunctionCodeKey
+      Runtime: nodejs18.x # Update this based on your Lambda's runtime
+
+  # IAM Role for Lambda Function
+  LambdaExecutionRole1:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaDynamoDBPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt CurrencyExchangeTable.Arn
+        - PolicyName: S3AccessForLambdaCode
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3:::${S3HoldLambdaCode}/lambda/*"
+
+  # EventBridge Rule
+  DailyTriggerRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Daily trigger for the update function"
+      ScheduleExpression: "cron(0 0 * * ? *)" # every day at midnight UTC
+      Targets:
+        - Arn: !GetAtt DailyUpdateFunction.Arn
+          Id: "DailyUpdateFunctionTarget"
+
+  # Permission for EventBridge to Invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DailyUpdateFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyTriggerRule.Arn
+
+  # MyCloudWatchAlarm:
+  #   Type: AWS::CloudWatch::Alarm
+    # Configuration details
+
+
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Description: "URL of the S3 bucket website"
+  CloudFrontDomainName:
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Description: "The domain name of the CloudFront distribution"
+    
+  ApiGatewayUrl:
+    Description: URL of the API Gateway
+    Value: !Sub https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com
+
+

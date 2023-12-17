@@ -1,0 +1,27 @@
+[
+    {
+      "ParameterKey": "BucketName",
+      "ParameterValue": "my-unique-bucket-name-123"
+    },
+    {
+        "ParameterKey": "S3HoldLambdaCode",
+        "ParameterValue": "first-aws-s3-haih"
+      },
+      {
+        "ParameterKey": "DailyUpdateFunctionCodeKey",
+        "ParameterValue": "lambda/lambda1-update-cronjob.zip"
+      },
+      {
+        "ParameterKey": "TimeSeriesFunctionCodeKey",
+        "ParameterValue": "lambda/lambda3-timeseries.zip"
+      },
+      {
+        "ParameterKey": "ConvertCurrencyFunctionCodeKey",
+        "ParameterValue": "lambda/lambda2-convert.zip"
+      },
+      {
+        "ParameterKey": "BucketName",
+        "ParameterValue": "s3-haile-currencyproject-02"
+      }
+      
+]

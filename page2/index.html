@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Exchange Chart</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Currency Exchange Chart</h1>
+        <div class="chart-container">
+            <div class="options-section">
+                <label for="currencyPair">Select Currency Pair:</label>
+                <select id="currencyPair">
+                    <option value="USD_AED">USD to AED</option>
+                    <option value="USD_AFN">USD to AFN</option>
+                    <option value="USD_ALL">USD to ALL</option>
+                    <option value="USD_AMD">USD to AMD</option>
+                    <option value="USD_ANG">USD to ANG</option>
+                    <option value="USD_AOA">USD to AOA</option>
+                    <option value="USD_ARS">USD to ARS</option>
+                    <option value="USD_AUD">USD to AUD</option>
+                    <option value="USD_AWG">USD to AWG</option>
+                    <option value="USD_AZN">USD to AZN</option>
+                    <option value="USD_BAM">USD to BAM</option>
+                    <option value="USD_BBD">USD to BBD</option>
+                    <option value="USD_BDT">USD to BDT</option>
+                    <option value="USD_BGN">USD to BGN</option>
+                    <option value="USD_BHD">USD to BHD</option>
+                    <option value="USD_BIF">USD to BIF</option>
+                    <option value="USD_BMD">USD to BMD</option>
+                    <option value="USD_BND">USD to BND</option>
+                    <option value="USD_BOB">USD to BOB</option>
+                    <option value="USD_BRL">USD to BRL</option>
+                    <option value="USD_BSD">USD to BSD</option>
+                    <option value="USD_BTN">USD to BTN</option>
+                    <option value="USD_BWP">USD to BWP</option>
+                    <option value="USD_BYN">USD to BYN</option>
+                    <option value="USD_BZD">USD to BZD</option>
+                    <option value="USD_CAD">USD to CAD</option>
+                    <option value="USD_CDF">USD to CDF</option>
+                    <option value="USD_CHF">USD to CHF</option>
+                    <option value="USD_CLP">USD to CLP</option>
+                    <option value="USD_CNY">USD to CNY</option>
+                    <option value="USD_COP">USD to COP</option>
+                    <option value="USD_CRC">USD to CRC</option>
+                    <option value="USD_CUP">USD to CUP</option>
+                    <option value="USD_CVE">USD to CVE</option>
+                    <option value="USD_CZK">USD to CZK</option>
+                    <option value="USD_DJF">USD to DJF</option>
+                    <option value="USD_DKK">USD to DKK</option>
+                    <option value="USD_DOP">USD to DOP</option>
+                    <option value="USD_DZD">USD to DZD</option>
+                    <option value="USD_EGP">USD to EGP</option>
+                    <option value="USD_ERN">USD to ERN</option>
+                    <option value="USD_ETB">USD to ETB</option>
+                    <option value="USD_EUR">USD to EUR</option>
+                    <option value="USD_FJD">USD to FJD</option>
+                    <option value="USD_FKP">USD to FKP</option>
+                    <!-- Add more options for each currency code as needed -->
+                </select>
+                <label for="timeFrame">Select Time Frame:</label>
+                <select id="timeFrame">
+                    <option value="daily">Daily (120 days)</option>
+                    <option value="monthly">Monthly (60 months)</option>
+                    <option value="yearly">Yearly (20 years)</option>
+                </select>
+                <button onclick="fetchAndRenderChart()">Generate Chart</button>
+            </div>
+            <div class="chart-section">
+                <canvas id="exchangeChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
