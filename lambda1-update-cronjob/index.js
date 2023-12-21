@@ -1,6 +1,11 @@
-const AWS = require('aws-sdk');
-const axios = require('axios');
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { default: axios } = require('axios');
+
+// Initialize the DynamoDB Document Client
+const dynamoDBClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
+const { v4: uuidv4 } = require('uuid');
 
 exports.handler = async (event, context) => {
     const maxRetries = 3;
@@ -12,7 +17,12 @@ exports.handler = async (event, context) => {
             const exchangeRates = externalApiResponse.data.conversion_rates;
 
             for (const [currency, rate] of Object.entries(exchangeRates)) {
-                await saveToDynamoDB(currency, rate);
+                // Generate a unique ID for each record, for example using a UUID
+                const id = generateUniqueId();
+                // Get the current date-time in ISO format
+                const datetimeUpdate = new Date().toISOString();
+                console.log('DEBUGING LAMBDA : ' +  id, 'USD', currency, rate, datetimeUpdate ) ;
+                await saveToDynamoDB(id, 'USD', currency, rate, datetimeUpdate);
             }
 
             return {
@@ -32,20 +42,26 @@ exports.handler = async (event, context) => {
     };
 };
 
-async function saveToDynamoDB(currency, rate) {
+async function saveToDynamoDB(id, baseCurrency, convertedCurrency, exchangeRate, datetimeUpdate) {
     const params = {
         TableName: process.env.DYNAMO_DB_TABLE_NAME,
         Item: {
-            'base_currency' : 'USD',
-            'converted_currency': currency,
-            'exchange_rate': rate
+            id, // Unique identifier for the record
+            base_currency: baseCurrency,
+            converted_currency: convertedCurrency,
+            exchange_rate: exchangeRate,
+            datetime_update : datetimeUpdate // Sort key
         }
     };
 
     try {
-        await dynamoDB.put(params).promise();
+        await docClient.send(new PutCommand(params));
     } catch (error) {
-        console.error(`Error saving currency ${currency}:`, error);
-        throw error; // Re-throw the error to be caught by the calling function
+        console.error(`Error saving currency ${convertedCurrency}:`, error);
+        throw error;
     }
+}
+
+function generateUniqueId() {
+    return uuidv4();
 }
