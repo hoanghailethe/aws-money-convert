@@ -1,6 +1,5 @@
 // Replace this with your API Gateway endpoint
-let apiEndpoint = 'YOUR_API_GATEWAY_ENDPOINT';
-apiEndpoint = 'https://v6.exchangerate-api.com/v6/222770c7c376abaf4d716b5b/latest/AUD'
+let apiEndpoint = 'https://ghabahxyfc.execute-api.eu-central-1.amazonaws.com';
 
 // Function to populate currency options in the select elements
 function populateCurrencyOptions() {
@@ -51,6 +50,7 @@ let errors = [];
 
 // Function to handle currency conversion
 async function convertCurrency() {
+    console.log('Currency converting')
     const fromCurrency = document.getElementById('fromCurrency').value;
     const toCurrency = document.getElementById('toCurrency').value;
     const amount = document.getElementById('amount').value;
@@ -58,7 +58,7 @@ async function convertCurrency() {
     if (!validateData(fromCurrency, toCurrency, amount )) return
 
     try {
-        const response = await fetch(`${apiEndpoint}/convert`, {
+        const response = await fetch(`${apiEndpoint}/convert-rate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -92,3 +92,12 @@ async function convertCurrency() {
 // Initialize the currency options
 populateCurrencyOptions();
 
+document.addEventListener('DOMContentLoaded', (event) => {
+  let form = document.getElementById('curForm');
+
+  form.addEventListener('submit', function(event) {
+   
+    event.preventDefault();
+    convertCurrency()
+  });
+});

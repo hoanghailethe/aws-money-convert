@@ -21,7 +21,7 @@ exports.handler = async (event, context) => {
                 const id = generateUniqueId();
                 // Get the current date-time in ISO format
                 const datetimeUpdate = new Date().toISOString();
-                console.log('DEBUGING LAMBDA : ' +  id, 'USD', currency, rate, datetimeUpdate ) ;
+                // console.log('DEBUGING LAMBDA : ' +  id, 'USD', currency, rate, datetimeUpdate ) ;
                 await saveToDynamoDB(id, 'USD', currency, rate, datetimeUpdate);
             }
 

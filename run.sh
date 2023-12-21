@@ -15,3 +15,9 @@ aws cloudformation create-stack \
   --region ap-southeast-1 `
   --output json `
   --tags Key=Project,Value=moneyConverter Key=Environment,Value=Prod
+
+
+aws lambda invoke --function-name YourFunctionName --payload '{}' output.txt
+
+aws lambda invoke --function-name ConvertCurrencyFunction --payload '{}' output.txt --region eu-central-1
+aws lambda invoke --function-name DailyUpdateFunction --payload '{}' output.txt --region eu-central-1

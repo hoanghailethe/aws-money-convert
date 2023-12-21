@@ -1,6 +1,5 @@
 // Replace this with your API Gateway endpoint
 let apiEndpoint = 'YOUR_API_GATEWAY_ENDPOINT';
-apiEndpoint = 'https://v6.exchangerate-api.com/v6/222770c7c376abaf4d716b5b/latest/AUD'
 
 // Function to populate currency options in the select elements
 function populateCurrencyOptions() {
@@ -51,6 +50,7 @@ let errors = [];
 
 // Function to handle currency conversion
 async function convertCurrency() {
+    console.log('Currency converting')
     const fromCurrency = document.getElementById('fromCurrency').value;
     const toCurrency = document.getElementById('toCurrency').value;
     const amount = document.getElementById('amount').value;
@@ -92,3 +92,12 @@ async function convertCurrency() {
 // Initialize the currency options
 populateCurrencyOptions();
 
+document.addEventListener('DOMContentLoaded', (event) => {
+  let form = document.getElementById('curForm');
+
+  form.addEventListener('submit', function(event) {
+   
+    event.preventDefault();
+    convertCurrency()
+  });
+});

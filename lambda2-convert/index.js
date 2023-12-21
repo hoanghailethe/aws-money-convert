@@ -1,6 +1,8 @@
-const AWS = require('aws-sdk');
+const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const dynamoDBClient = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
 
 exports.handler = async (event, context) => {
     try {
@@ -30,20 +32,35 @@ exports.handler = async (event, context) => {
 };
 
 async function getExchangeRateForUSD(from_currency, to_currency) {
+    // const params = {
+    //     TableName: process.env.DYNAMO_DB_TABLE_NAME,
+    //     KeyConditionExpression: '#date = :date AND (#base_currency = :base_currency AND #converted_currency = :converted_currency)',
+    //     ExpressionAttributeNames: {
+    //         '#date': 'datetime_update',
+    //         '#base_currency': 'base_currency',
+    //         '#converted_currency': 'converted_currency',
+    //     },
+    //     ExpressionAttributeValues: {
+    //         ':date': getCurrentDate(),
+    //         ':base_currency': from_currency === 'USD' ? 'USD' : to_currency,
+    //         ':converted_currency': from_currency === 'USD' ? to_currency : from_currency,
+    //     },
+    // };
+
     const params = {
         TableName: process.env.DYNAMO_DB_TABLE_NAME,
-        KeyConditionExpression: '#date = :date AND (#base_currency = :base_currency AND #converted_currency = :converted_currency)',
+        KeyConditionExpression: '#base_currency = :base_currency AND #converted_currency = :converted_currency',
         ExpressionAttributeNames: {
-            '#date': 'date',
-            '#base_currency': 'base_currency',
-            '#converted_currency': 'converted_currency',
+          '#base_currency': 'base_currency',
+          '#converted_currency': 'converted_currency',
         },
         ExpressionAttributeValues: {
-            ':date': getCurrentDate(),
-            ':base_currency': from_currency === 'USD' ? 'USD' : to_currency,
-            ':converted_currency': from_currency === 'USD' ? to_currency : from_currency,
+          ':base_currency': from_currency === 'USD' ? 'USD' : to_currency,
+          ':converted_currency': from_currency === 'USD' ? to_currency : from_currency,
         },
-    };
+        ScanIndexForward: false, // Set to false to retrieve items in descending order (latest first)
+        Limit: 1, // Limit to 1 to get only the latest record
+      };
 
     const result = await dynamoDB.query(params).promise();
     return result.Items[0].exchange_rate;
@@ -56,6 +73,6 @@ async function calculateExchangeRateUsingUSD(from_currency, to_currency) {
     return usdToConvertedRate / usdToBaseRate;
 }
 
-function getCurrentDate() {
-    return new Date().toISOString().split('T')[0];
-}
+// function getCurrentDate() {
+//     return new Date().toISOString().split('T')[0];
+// }

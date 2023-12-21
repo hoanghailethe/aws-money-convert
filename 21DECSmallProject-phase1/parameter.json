@@ -1,0 +1,15 @@
+[
+    {
+        "ParameterKey": "S3HoldLambdaCode",
+        "ParameterValue": "eu-bucket-haihoang2024"
+      },
+      {
+        "ParameterKey": "DailyUpdateFunctionCodeKey",
+        "ParameterValue": "MoneyConvertor/lambda1-update-cronjob.zip"
+      },
+      {
+        "ParameterKey": "ConvertCurrencyFunctionCodeKey",
+        "ParameterValue": "MoneyConvertor/lambda2-convert.zip"
+      }
+      
+]
