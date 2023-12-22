@@ -1,5 +1,5 @@
 // Replace this with your API Gateway endpoint
-let apiEndpoint = 'https://ghabahxyfc.execute-api.eu-central-1.amazonaws.com';
+let apiEndpoint = 'https://ghabahxyfc.execute-api.eu-central-1.amazonaws.com/cors';
 
 // Function to populate currency options in the select elements
 function populateCurrencyOptions() {

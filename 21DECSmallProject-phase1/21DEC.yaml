@@ -150,6 +150,7 @@ Resources:
         - StatusCode: 200
           ResponseParameters:
             'method.response.header.Access-Control-Allow-Origin': true
+            # OPTION is always a BONUS
       
 
   # Lambda Permissions
