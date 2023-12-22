@@ -12,10 +12,12 @@ aws cloudformation create-stack \
   --template-body file://17DEC.yaml `
   --parameters file://parameter.json `
   --capabilities CAPABILITY_IAM `
-  --region ap-southeast-1 `
+  --region eu-central-1 `
   --output json `
   --tags Key=Project,Value=moneyConverter Key=Environment,Value=Prod
 
+aws cloudformation update-stack --stack-name YourStackName --template-body file://path/to/your/updated/template.yaml --parameters ParameterKey=ParamName,ParameterValue=ParamValue
+aws cloudformation update-stack --stack-name moneyConverter --template-body file://21DEC.yaml --parameters file://parameter.json --region eu-central-1 --capabilities CAPABILITY_IAM
 
 aws lambda invoke --function-name YourFunctionName --payload '{}' output.txt
 

@@ -134,6 +134,7 @@ Resources:
 
 
   # Methods for API resources
+    # add CORS
   ConvertCurrencyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -142,10 +143,14 @@ Resources:
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
-        Type: AWS_PROXY
         IntegrationHttpMethod: POST
+        Type: AWS_PROXY
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConvertCurrencyFunction.Arn}/invocations
-
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            'method.response.header.Access-Control-Allow-Origin': true
+      
 
   # Lambda Permissions
   ConvertCurrencyPermission:
