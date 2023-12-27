@@ -1,4 +1,4 @@
-Please Go to this link to try the Web: [Money Convertor web - new rate update everyday](djf4coxk6u649.cloudfront.net/MoneyConvertor/index.html)
+Please Go to this link to try the Web: [Money Convertor web - new rate update everyday](https://djf4coxk6u649.cloudfront.net/MoneyConvertor/index.html)
 
 Link to more detail document: [document](https://dev.haihoang.org/blogs/Project-serverless-curency-convertor)
 
