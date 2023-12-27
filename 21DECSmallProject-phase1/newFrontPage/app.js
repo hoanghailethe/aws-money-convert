@@ -1,5 +1,5 @@
 // Replace this with your API Gateway endpoint
-let apiEndpoint = 'https://ghabahxyfc.execute-api.eu-central-1.amazonaws.com/cors';
+let apiEndpoint = 'https://zch85u9qm5.execute-api.eu-central-1.amazonaws.com/cors';
 
 // Function to populate currency options in the select elements
 function populateCurrencyOptions() {
@@ -58,23 +58,42 @@ async function convertCurrency() {
     if (!validateData(fromCurrency, toCurrency, amount )) return
 
     try {
-        const response = await fetch(`${apiEndpoint}/convert-rate`, {
+          const response = await fetch(`${apiEndpoint}/convert-rate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ from_currency: fromCurrency, to_currency: toCurrency, amount: amount }),
+            body: JSON.stringify({
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: `{"from_currency": "${fromCurrency}", "to_currency": "${toCurrency}", "amount": "${amount}"}`,
+            }),
         });
 
-        const result = await response.json();
+        // const responseBody = await response.text(); // Get the response body as a string
+        // console.log( responseBody)      //line 76    : print out : {"statusCode":200,"headers":{"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"OPTIONS,POST,GET"},"body":"{\"exchangeRate\":0.01797568505348422}"}
+        // // Check if the "body" field is a string, then parse it
+        // const innerBody = typeof responseBody.body === 'string' ? JSON.parse(responseBody.body) : responseBody.body;
+        // console.log( innerBody )    // print : undefined
 
-        if (result && result.exchangeRate) {
-            const convertedAmount = (amount * result.exchangeRate).toFixed(2);
-            document.getElementById('result').textContent = `${convertedAmount} ${toCurrency}`;
+        // const respo2 = responseBody.json()
+        // console.log( respo2 )
+
+        const responseBody = await response.json();
+        console.log( responseBody )     // {statusCode: 200, headers: {…}, body: '{"exchangeRate":572.3933210909338}'}
+
+        let rate = JSON.parse(responseBody.body ).exchangeRate;
+        if (responseBody && responseBody.body ) {
+          const convertedAmount = (amount * rate ).toFixed(2);
+          document.getElementById('result').textContent = `${convertedAmount} ${toCurrency}`;
+          document.getElementById('rate').textContent = ` 1 ${fromCurrency} = ${rate} ${toCurrency}`;
         } else {
             document.getElementById('result').textContent = 'Conversion failed. Please try again.';
         }
     } catch (error) {
+        console.log ( error)
         if (error instanceof TypeError) {
 
           document.getElementById('result').textContent = 'Network error. Please check your connection and try again.';

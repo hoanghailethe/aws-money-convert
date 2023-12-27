@@ -6,6 +6,8 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 exports.handler = async (event, context) => {
     try {
+        console.log('Event :', JSON.stringify(event, null, 2));
+
         const { from_currency, to_currency } = JSON.parse(event.body);
 
         let exchangeRate;
@@ -21,8 +23,9 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 200,
             headers: {
-                'Access-Control-Allow-Origin': 'https://djf4coxk6u649.cloudfront.net',
+                'Access-Control-Allow-Origin': '*', // Allow all origins (replace with specific origins if needed)
                 'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
               },
             body: JSON.stringify({ exchangeRate }),
         };
@@ -31,9 +34,9 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 500,
             headers: {
-                'Access-Control-Allow-Origin': 'https://djf4coxk6u649.cloudfront.net',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST',
+                'Access-Control-Allow-Origin': '*', // Allow all origins (replace with specific origins if needed)
                 'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
               },
             body: JSON.stringify('Error converting currency'),
         };
@@ -41,20 +44,6 @@ exports.handler = async (event, context) => {
 };
 
 async function getExchangeRateForUSD(from_currency, to_currency) {
-    // const params = {
-    //     TableName: process.env.DYNAMO_DB_TABLE_NAME,
-    //     KeyConditionExpression: '#date = :date AND (#base_currency = :base_currency AND #converted_currency = :converted_currency)',
-    //     ExpressionAttributeNames: {
-    //         '#date': 'datetime_update',
-    //         '#base_currency': 'base_currency',
-    //         '#converted_currency': 'converted_currency',
-    //     },
-    //     ExpressionAttributeValues: {
-    //         ':date': getCurrentDate(),
-    //         ':base_currency': from_currency === 'USD' ? 'USD' : to_currency,
-    //         ':converted_currency': from_currency === 'USD' ? to_currency : from_currency,
-    //     },
-    // };
 
     const command = new ScanCommand({
         TableName: process.env.DYNAMO_DB_TABLE_NAME,
@@ -73,10 +62,12 @@ async function getExchangeRateForUSD(from_currency, to_currency) {
 
     const result = await docClient.send(command);
     console.log(result);
-    if(result.Count  == 0) {
+    if(result.Items.length == 0 ) {
         return 'We dont have data for this pair of currency yet. We would keep it update later! Sorry!';
     }
-    return result.Items[0].exchange_rate;
+    let rate = result.Items[0].exchange_rate;
+    if ( from_currency === 'USD' ) return rate ;
+    return 1/rate ;
 }
 
 async function calculateExchangeRateUsingUSD(from_currency, to_currency) {
@@ -89,3 +80,18 @@ async function calculateExchangeRateUsingUSD(from_currency, to_currency) {
 // function getCurrentDate() {
 //     return new Date().toISOString().split('T')[0];
 // }
+
+    // const params = {
+    //     TableName: process.env.DYNAMO_DB_TABLE_NAME,
+    //     KeyConditionExpression: '#date = :date AND (#base_currency = :base_currency AND #converted_currency = :converted_currency)',
+    //     ExpressionAttributeNames: {
+    //         '#date': 'datetime_update',
+    //         '#base_currency': 'base_currency',
+    //         '#converted_currency': 'converted_currency',
+    //     },
+    //     ExpressionAttributeValues: {
+    //         ':date': getCurrentDate(),
+    //         ':base_currency': from_currency === 'USD' ? 'USD' : to_currency,
+    //         ':converted_currency': from_currency === 'USD' ? to_currency : from_currency,
+    //     },
+    // };
